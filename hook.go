@@ -11,9 +11,9 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
-for _, cookie := range r.Cookies() {
-    fmt.Printf("COOKIE: %s: %s\n", cookie.Name, cookie.Value)
-}
+	for _, cookie := range r.Cookies() {
+		fmt.Printf("COOKIE: %s: %s\n", cookie.Name, cookie.Value)
+	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err == nil {
@@ -22,22 +22,27 @@ for _, cookie := range r.Cookies() {
 	var payload interface{}
 	err = json.Unmarshal(body, &payload)
 	if err == nil {
-	printMap(payload)
+		printMap(payload)
 
-	m := payload.(map[string]interface{})
-	// push_data := m["push_data"] //.(map[string]interface{})
+		m := payload.(map[string]interface{})
+		// push_data := m["push_data"] //.(map[string]interface{})
 
-	fmt.Println("callbackURL: ", m["callback_url"])
+		fmt.Println("callbackURL: ", m["callback_url"])
 
-	resp, err := sendReply(m["callback_url"].(string))
-	if err != nil {
-		fmt.Println("ERROR callback: ", err)
-	} else {
-		fmt.Println("SUCCESS callback: ", resp)
-	}
-	
+		resp, err := sendReply(m["callback_url"].(string))
+		if err != nil {
+			fmt.Println("ERROR callback: ", err)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				fmt.Printf("callback BODY: %s\n", body)
+			} else {
+				fmt.Println("no callback BODY")
+			}
+		} else {
+			fmt.Println("SUCCESS callback: ", resp)
+		}
 
-	fmt.Fprintf(w, "This is a hook processor\n")
+		fmt.Fprintf(w, "This is a hook processor\n")
 	}
 }
 
@@ -47,14 +52,14 @@ func main() {
 }
 
 func sendReply(url string) (*http.Response, error) {
-    var jsonStr = []byte(`{"status":"success"}`)
-    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-    req.Header.Set("Content-Type", "application/json")
+	var jsonStr = []byte(`{"state":"success"}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    defer resp.Body.Close()
-    return resp, err
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	//    defer resp.Body.Close()
+	return resp, err
 }
 
 // print the json payload - good for debugging
