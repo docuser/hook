@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	//"net/url"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
+
+for _, cookie := range r.Cookies() {
+    fmt.Printf("COOKIE: %s: %s\n", cookie.Name, cookie.Value)
+}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err == nil {
@@ -24,10 +29,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("callbackURL: ", m["callback_url"])
 
-	data := url.Values{}
-	data.Set("state", "success")
-
-	resp, err := http.PostForm(m["callback_url"].(string), data)
+	resp, err := sendReply(m["callback_url"].(string))
 	if err != nil {
 		fmt.Println("ERROR callback: ", err)
 	} else {
@@ -44,6 +46,16 @@ func main() {
 	http.ListenAndServe(":80", nil)
 }
 
+func sendReply(url string) (*http.Response, error) {
+    var jsonStr = []byte(`{"status":"success"}`)
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("Content-Type", "application/json")
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    defer resp.Body.Close()
+    return resp, err
+}
 
 // print the json payload - good for debugging
 func printMap(payload interface{}) {
