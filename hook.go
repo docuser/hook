@@ -6,44 +6,37 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	//"net/url"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-
-	for _, cookie := range r.Cookies() {
-		fmt.Printf("COOKIE: %s: %s\n", cookie.Name, cookie.Value)
-	}
-
 	body, err := ioutil.ReadAll(r.Body)
-	if err == nil {
-		fmt.Printf("BODY: %s\n", body)
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
 	}
 	var payload interface{}
 	err = json.Unmarshal(body, &payload)
-	if err == nil {
-		printMap(payload)
-
-		m := payload.(map[string]interface{})
-		// push_data := m["push_data"] //.(map[string]interface{})
-
-		fmt.Println("callbackURL: ", m["callback_url"])
-
-		resp, err := sendReply(m["callback_url"].(string))
-		if err != nil {
-			fmt.Println("ERROR callback: ", err)
-			body, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				fmt.Printf("callback BODY: %s\n", body)
-			} else {
-				fmt.Println("no callback BODY")
-			}
-		} else {
-			fmt.Println("SUCCESS callback: ", resp)
-		}
-
-		fmt.Fprintf(w, "This is a hook processor\n")
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
 	}
+	printMap(payload)
+
+	m := payload.(map[string]interface{})
+
+	resp, err := sendReply(m["callback_url"].(string))
+	if err != nil {
+		fmt.Println("ERROR callback: ", err)
+	}
+	fmt.Println("callback to ", m["callback_url"].(string))
+	body, err = ioutil.ReadAll(resp.Body)
+	if err == nil {
+		fmt.Printf("%s", body)
+	} else {
+		fmt.Println("no callback BODY")
+	}
+
+	fmt.Fprintf(w, "This is a hook processor\n")
 }
 
 func main() {
@@ -58,34 +51,36 @@ func sendReply(url string) (*http.Response, error) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	//    defer resp.Body.Close()
 	return resp, err
 }
 
 // print the json payload - good for debugging
 func printMap(payload interface{}) {
+	printMapIndent(payload, "")
+}
+func printMapIndent(payload interface{}, indent string) {
 	m := payload.(map[string]interface{})
 	for k, v := range m {
 		switch vv := v.(type) {
 		case string:
-			fmt.Println(k, "is string", vv)
+			fmt.Println(indent, k, "is string", vv)
 		case nil:
-			fmt.Println(k, "is nil")
+			fmt.Println(indent, k, "is nil")
 		case bool:
-			fmt.Println(k, "is bool", vv)
+			fmt.Println(indent, k, "is bool", vv)
 		case int:
-			fmt.Println(k, "is int", vv)
+			fmt.Println(indent, k, "is int", vv)
 		case float64:
-			fmt.Println(k, "is float64", vv)
+			fmt.Println(indent, k, "is float64", vv)
 		case []interface{}:
-			fmt.Println(k, "is an array:")
+			fmt.Println(indent, k, "is an array:")
 			for i, u := range vv {
-				fmt.Println(i, u)
+				fmt.Println(indent, i, u)
 			}
 		default:
-			//        fmt.Println(k, "is of a type I don't know how to handle")
-			fmt.Printf("-- %s: ", k)
-			printMap(v)
+			//        fmt.Println(indent, k, "is of a type I don't know how to handle")
+			fmt.Println(indent, k)
+			printMapIndent(v, "  "+indent)
 			fmt.Println("")
 		}
 	}
