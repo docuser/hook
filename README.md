@@ -53,3 +53,10 @@ owner is string svendowideit
 callbackURL:  https://registry.hub.docker.com/u/svendowideit/testhook/hook/21402b11bee3ecbdif11i4fifg0242eg1100a1/
 SUCCESS callback:  &{400 BAD REQUEST 400 HTTP/1.1 1 1 map[Server:[nginx] Date:[Tue, 02 Dec 2014 06:18:44 GMT] Content-Type:[application/json] Vary:[Cookie] X-Frame-Options:[SAMEORIGIN] Strict-Transport-Security:[max-age=31536000]] 0xc208260dc0 -1 [chunked] true map[] 0xc208026340 0xc20821a8a0}
 ```
+
+obviously my bug, as then
+
+```
+$ curl --data '{"state":"success"}' https://registry.hub.docker.com/u/svendowideit/testhook/hook/21402b11bee3ecb1i4fifg0242eg1100a1/
+"OK"
+```

@@ -23,7 +23,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// push_data := m["push_data"] //.(map[string]interface{})
 
 	fmt.Println("callbackURL: ", m["callback_url"])
-	resp, err := http.PostForm(m["callback_url"].(string), url.Values{"state": {"success"}})
+
+	data := url.Values{}
+	data.Set("state", "success")
+
+	resp, err := http.PostForm(m["callback_url"].(string), data)
 	if err != nil {
 		fmt.Println("ERROR callback: ", err)
 	} else {
