@@ -6,27 +6,33 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println("ERROR: ", err)
+		fmt.Println("ERROR:", err)
 		return
 	}
 	var payload interface{}
 	err = json.Unmarshal(body, &payload)
 	if err != nil {
-		fmt.Println("ERROR: ", err)
+		fmt.Println("ERROR:", err)
 		return
 	}
-	printMap(payload)
+	b, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
+	os.Stdout.Write(b)
 
 	m := payload.(map[string]interface{})
 
 	resp, err := sendReply(m["callback_url"].(string))
 	if err != nil {
-		fmt.Println("ERROR callback: ", err)
+		fmt.Println("ERROR callback:", err)
 	}
 	fmt.Println("callback to ", m["callback_url"].(string))
 	body, err = ioutil.ReadAll(resp.Body)
@@ -52,36 +58,4 @@ func sendReply(url string) (*http.Response, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	return resp, err
-}
-
-// print the json payload - good for debugging
-func printMap(payload interface{}) {
-	printMapIndent(payload, "")
-}
-func printMapIndent(payload interface{}, indent string) {
-	m := payload.(map[string]interface{})
-	for k, v := range m {
-		switch vv := v.(type) {
-		case string:
-			fmt.Println(indent, k, "is string", vv)
-		case nil:
-			fmt.Println(indent, k, "is nil")
-		case bool:
-			fmt.Println(indent, k, "is bool", vv)
-		case int:
-			fmt.Println(indent, k, "is int", vv)
-		case float64:
-			fmt.Println(indent, k, "is float64", vv)
-		case []interface{}:
-			fmt.Println(indent, k, "is an array:")
-			for i, u := range vv {
-				fmt.Println(indent, i, u)
-			}
-		default:
-			//        fmt.Println(indent, k, "is of a type I don't know how to handle")
-			fmt.Println(indent, k)
-			printMapIndent(v, "  "+indent)
-			fmt.Println("")
-		}
-	}
 }
