@@ -46,3 +46,5 @@ once you know the callback_url, you can just as easily use curl :)
 $ curl --data '{"state":"success"}' https://registry.hub.docker.com/u/svendowideit/testhook/hook/21402b11bee3ecb1i4fifg0242eg1100a1/
 "OK"
 ```
+
+test commit to see if re-adding the GH account triggers the auto-build still.
